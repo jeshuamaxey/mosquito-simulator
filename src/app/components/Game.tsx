@@ -11,33 +11,28 @@ import Environment from '../game/models/Environment';
 import Mosquito from '../game/models/Mosquito';
 import HUD from './HUD';
 import KeyboardControls from './KeyboardControls';
-import { Group, Vector3, MathUtils, Object3D, Mesh, Material, Color, Euler, Quaternion } from 'three';
+import { Group, Vector3, MathUtils, Object3D, Mesh, Material, Color, Euler, Quaternion, Box3 } from 'three';
 import { useGameStore } from '../game/store/gameStore';
+import StartDialog from './StartDialog';
 
 export default function Game() {
   const [canInfectGlobal, setCanInfectGlobal] = useState(true);
-  const [cameraMode, setCameraMode] = useState<CameraMode>(CameraMode.FirstPerson);
-  const [showModeIndicator, setShowModeIndicator] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   
-  // Show mode indicator when camera mode changes
-  useEffect(() => {
-    setShowModeIndicator(true);
-    const timer = setTimeout(() => {
-      setShowModeIndicator(false);
-    }, 2000); // Hide after 2 seconds
-    
-    return () => clearTimeout(timer);
-  }, [cameraMode]);
+  // Handle game start
+  const handleGameStart = () => {
+    setGameStarted(true);
+    // Request pointer lock after game starts
+    const canvas = document.querySelector('canvas');
+    if (canvas && canvas.requestPointerLock) {
+      canvas.requestPointerLock();
+    }
+  };
   
   return (
     <div className="w-full h-screen relative overflow-hidden">
       {/* Crosshair - changes color when ready to infect */}
       <div className={`crosshair ${canInfectGlobal ? 'ready' : 'cooldown'}`}></div>
-      
-      {/* Camera mode indicator */}
-      <div className={`camera-mode-indicator ${showModeIndicator ? '' : 'fade'}`}>
-        Camera Mode: {cameraMode === CameraMode.FirstPerson ? 'First Person' : 'Third Person'}
-      </div>
       
       <KeyboardControls>
         <Canvas shadows>
@@ -55,11 +50,10 @@ export default function Game() {
             <DreiEnvironment preset="apartment" />
             <Environment humanCount={15} />
             
-            {/* Third person controller */}
-            <ThirdPersonController 
+            {/* First person controller */}
+            <FirstPersonController 
               setCanInfectGlobal={setCanInfectGlobal} 
-              cameraMode={cameraMode}
-              setCameraMode={setCameraMode}
+              enabled={gameStarted}
             />
             
             {/* Debug */}
@@ -72,25 +66,22 @@ export default function Game() {
       <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
         <HUD />
       </div>
+      
+      {/* Start Dialog */}
+      {!gameStarted && (
+        <StartDialog onStart={handleGameStart} />
+      )}
     </div>
   );
 }
 
-// Camera modes
-enum CameraMode {
-  FirstPerson = 1,
-  ThirdPerson = 2
-}
-
-// Third-person controller with camera mode switching
-function ThirdPersonController({ 
-  setCanInfectGlobal, 
-  cameraMode, 
-  setCameraMode 
+// First-person controller
+function FirstPersonController({ 
+  setCanInfectGlobal,
+  enabled = true
 }: { 
   setCanInfectGlobal: (canInfect: boolean) => void;
-  cameraMode: CameraMode;
-  setCameraMode: (mode: CameraMode) => void;
+  enabled?: boolean;
 }) {
   // Reference to the mosquito group
   const mosquitoRef = useRef<Group>(null);
@@ -131,16 +122,10 @@ function ThirdPersonController({
     setCanInfectGlobal(canInfect);
   }, [canInfect, setCanInfectGlobal]);
   
-  // Initialize camera mode in HUD when component mounts
-  useEffect(() => {
-    const cameraModeElement = document.getElementById('camera-mode');
-    if (cameraModeElement) {
-      cameraModeElement.textContent = cameraMode === CameraMode.FirstPerson ? 'First Person' : 'Third Person';
-    }
-  }, []);
-  
   // Set up pointer lock for mouse controls
   useEffect(() => {
+    if (!enabled) return;
+    
     const canvas = document.querySelector('canvas');
     if (!canvas) return;
     
@@ -161,37 +146,11 @@ function ThirdPersonController({
       canvas.removeEventListener('click', requestPointerLock);
       document.removeEventListener('pointerlockchange', handlePointerLockChange);
     };
-  }, [isPointerLocked]);
-  
-  // Handle keyboard input for camera mode switching
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '1') {
-        setCameraMode(CameraMode.FirstPerson);
-        console.log('Switched to First Person camera mode');
-        // Update the camera mode indicator in the HUD
-        const cameraModeElement = document.getElementById('camera-mode');
-        if (cameraModeElement) {
-          cameraModeElement.textContent = 'First Person';
-        }
-      } else if (e.key === '2') {
-        setCameraMode(CameraMode.ThirdPerson);
-        console.log('Switched to Third Person camera mode');
-        // Update the camera mode indicator in the HUD
-        const cameraModeElement = document.getElementById('camera-mode');
-        if (cameraModeElement) {
-          cameraModeElement.textContent = 'Third Person';
-        }
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isPointerLocked, enabled]);
   
   // Handle mouse movement for camera orientation
   useEffect(() => {
-    if (!isPointerLocked) return;
+    if (!isPointerLocked || !enabled) return;
     
     // Use quaternions for rotation to avoid gimbal lock issues
     const handleMouseMove = (e: MouseEvent) => {
@@ -236,10 +195,12 @@ function ThirdPersonController({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isPointerLocked, camera, mouseSensitivity]);
+  }, [isPointerLocked, camera, mouseSensitivity, enabled]);
   
   // Handle mouse click for infection
   useEffect(() => {
+    if (!enabled) return;
+    
     const handleClick = () => {
       if (!canInfect || !mosquitoRef.current) return;
       
@@ -285,11 +246,11 @@ function ThirdPersonController({
     
     window.addEventListener('click', handleClick);
     return () => window.removeEventListener('click', handleClick);
-  }, [canInfect, increaseInfectionCount, scene]);
+  }, [canInfect, increaseInfectionCount, scene, enabled]);
   
   // Update mosquito position and camera position
   useFrame((state) => {
-    if (!mosquitoRef.current) return;
+    if (!mosquitoRef.current || !enabled) return;
     
     // Get keyboard input for acceleration/deceleration
     const forwardSpeed = velocity.z;
@@ -329,6 +290,52 @@ function ThirdPersonController({
     newPosition.y = Math.max(WORLD_BOUNDS.minY, Math.min(WORLD_BOUNDS.maxY, newPosition.y));
     newPosition.z = Math.max(WORLD_BOUNDS.minZ, Math.min(WORLD_BOUNDS.maxZ, newPosition.z));
     
+    // Check for collisions with cubicle walls
+    // Only check if we're below the height of the walls (3 units)
+    if (mosquitoRef.current.position.y < 3.5) {
+      // Find all cubicle walls in the scene
+      const walls: Object3D[] = [];
+      scene.traverse((object) => {
+        // Check if this is a cubicle wall by looking for a custom property or by name
+        if (object.name.includes('cubicle-wall')) {
+          walls.push(object);
+        }
+      });
+      
+      // Check if the mosquito would collide with any wall
+      for (const wall of walls) {
+        // Simple AABB collision detection
+        // Get wall dimensions and position
+        const wallBox = new Box3().setFromObject(wall);
+        
+        // Create a box for the mosquito at the new position
+        const mosquitoBox = new Box3();
+        const mosquitoSize = 0.3; // Approximate size of mosquito
+        mosquitoBox.min.set(
+          newPosition.x - mosquitoSize,
+          newPosition.y - mosquitoSize,
+          newPosition.z - mosquitoSize
+        );
+        mosquitoBox.max.set(
+          newPosition.x + mosquitoSize,
+          newPosition.y + mosquitoSize,
+          newPosition.z + mosquitoSize
+        );
+        
+        // Check for intersection
+        if (mosquitoBox.intersectsBox(wallBox)) {
+          // Collision detected, prevent movement in x and z directions
+          newPosition.x = mosquitoRef.current.position.x;
+          newPosition.z = mosquitoRef.current.position.z;
+          
+          // Zero out velocity in x and z directions
+          currentVelocity.current.x = 0;
+          currentVelocity.current.z = 0;
+          break;
+        }
+      }
+    }
+    
     // Update mosquito position with bounded values
     mosquitoRef.current.position.x = newPosition.x;
     mosquitoRef.current.position.y = newPosition.y;
@@ -354,44 +361,15 @@ function ThirdPersonController({
     // Apply smooth rotation to the mosquito
     mosquitoRef.current.quaternion.slerp(targetQuaternion, 0.1);
     
-    // Handle camera positioning based on selected mode
-    if (cameraMode === CameraMode.FirstPerson) {
-      // First-person camera mode
-      // Position camera at the mosquito's position with a small offset
-      const firstPersonOffset = new Vector3(0, 0.2, 0);
-      
-      // Set camera position
-      state.camera.position.copy(mosquitoRef.current.position).add(firstPersonOffset);
-      
-      // Camera rotation is already handled by the mouse movement handler
-    } else {
-      // Third-person camera mode
-      
-      // Get the camera's current forward direction
-      const cameraForward = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-      
-      // Invert it to get the backward direction (for positioning behind the mosquito)
-      const cameraBackward = cameraForward.clone().multiplyScalar(-1);
-      
-      // Calculate the ideal camera position in world space
-      const idealPosition = new Vector3();
-      idealPosition.copy(mosquitoRef.current.position)
-        .add(new Vector3(0, 2, 0)) // Up offset
-        .add(cameraBackward.multiplyScalar(6)); // Back offset
-      
-      // Smoothly move the camera to the ideal position
-      state.camera.position.x = MathUtils.lerp(state.camera.position.x, idealPosition.x, 0.05);
-      state.camera.position.y = MathUtils.lerp(state.camera.position.y, idealPosition.y, 0.05);
-      state.camera.position.z = MathUtils.lerp(state.camera.position.z, idealPosition.z, 0.05);
-      
-      // Look at a point slightly above the mosquito for better framing
-      const lookAtPosition = mosquitoRef.current.position.clone().add(new Vector3(0, 0.5, 0));
-      state.camera.lookAt(lookAtPosition);
-    }
+    // Position camera at the mosquito's position with a small offset
+    const firstPersonOffset = new Vector3(0, 0.2, 0);
+    
+    // Set camera position
+    state.camera.position.copy(mosquitoRef.current.position).add(firstPersonOffset);
   });
   
   return (
-    <group ref={mosquitoRef} position={[0, 1.5, 0]}>
+    <group ref={mosquitoRef} position={[0, 1.5, 0]} name="mosquito">
       <Mosquito position={[0, 0, 0]} />
     </group>
   );

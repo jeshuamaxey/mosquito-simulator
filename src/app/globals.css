@@ -135,21 +135,7 @@ canvas:active {
   backdrop-filter: blur(4px);
 }
 
-/* Camera mode indicator */
+/* Remove camera mode indicator styles */
 .camera-mode-indicator {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  z-index: 1000;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.camera-mode-indicator.fade {
-  opacity: 0;
+  display: none;
 }
