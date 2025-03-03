@@ -13,19 +13,19 @@ interface SprayParticle {
 }
 
 interface AdversaryProps {
-  position?: [number, number, number];
+  position: [number, number, number];
   scale?: [number, number, number];
   movementSpeed?: number;
 }
 
-export const Adversary: React.FC<AdversaryProps> = ({
-  position = [0, 0, 0],
-  scale = [1, 1, 1],
-  movementSpeed = 0.05,
-}) => {
+export default function Adversary({ 
+  position, 
+  scale = [1, 1, 1], 
+  movementSpeed = 0.05
+}: AdversaryProps) {
   const groupRef = useRef<Group>(null);
   const sprayRef = useRef<Group>(null);
-  const currentPosition = useRef(new Vector3(...position));
+  const currentPosition = useRef(new Vector3(position[0], position[1], position[2]));
   const targetPosition = useRef(new Vector3(...position));
   const currentVelocity = useRef(new Vector3(0, 0, 0));
   const [isSpraying, setIsSpraying] = useState(false);
@@ -39,6 +39,9 @@ export const Adversary: React.FC<AdversaryProps> = ({
   const { scene } = useThree();
   const decreaseLives = useGameStore((state) => state.decreaseLives);
   const gameOver = useGameStore((state) => state.gameOver);
+  
+  // Hair animation
+  const [hairTime, setHairTime] = useState(0);
   
   // Initialize spray particles
   useEffect(() => {
@@ -97,9 +100,31 @@ export const Adversary: React.FC<AdversaryProps> = ({
     }, 2000);
   };
   
-  // Update adversary position and check for collisions
+  // Improved walking animation with wall collision detection
   useFrame((_, delta) => {
     if (!groupRef.current || gameOver) return;
+    
+    // Update walk time
+    setHairTime(prev => prev + delta);
+    
+    // Animate hair swaying
+    const hairSway = Math.sin(hairTime * 2) * 0.05;
+    if (groupRef.current) {
+      // Find hair parts and animate them
+      groupRef.current.traverse((child) => {
+        if (child.name.includes('hair')) {
+          // Apply subtle swaying motion to hair
+          child.rotation.x = Math.sin(hairTime * 1.5) * 0.03;
+          child.rotation.z = hairSway;
+          
+          // If it's the flowing hair, make it sway more
+          if (child.name.includes('flowing')) {
+            child.rotation.x = Math.sin(hairTime * 1.5) * 0.08;
+            child.rotation.z = hairSway * 1.5;
+          }
+        }
+      });
+    }
     
     // Find mosquito every frame
     const mosquitoObj = scene.getObjectByName('mosquito');
@@ -161,6 +186,23 @@ export const Adversary: React.FC<AdversaryProps> = ({
       }
     }
     
+    // Check for world boundaries
+    const WORLD_BOUNDS = {
+      minX: -49,
+      maxX: 49,
+      minZ: -49,
+      maxZ: 49
+    };
+    
+    if (newPosition.x < WORLD_BOUNDS.minX || newPosition.x > WORLD_BOUNDS.maxX ||
+        newPosition.z < WORLD_BOUNDS.minZ || newPosition.z > WORLD_BOUNDS.maxZ) {
+      collision = true;
+      
+      // Bounce off the boundary by reversing direction
+      currentVelocity.current.negate();
+      targetPosition.current.copy(currentPosition.current.clone().add(currentVelocity.current.clone().multiplyScalar(10)));
+    }
+    
     // Only update position if no collision
     if (!collision) {
       currentPosition.current.copy(newPosition);
@@ -217,58 +259,180 @@ export const Adversary: React.FC<AdversaryProps> = ({
   });
   
   return (
-    <group ref={groupRef} position={[position[0], position[1], position[2]]} scale={scale}>
-      {/* Body - changed to a dress/pencil skirt shape */}
-      <Box args={[0.6, 1.0, 0.4]} position={[0, 1.4, 0]}>
-        <meshStandardMaterial color="#6b7280" />
-      </Box>
-      
-      {/* Pencil Skirt */}
-      <Box args={[0.5, 0.8, 0.35]} position={[0, 0.6, 0]}>
-        <meshStandardMaterial color="#1f2937" />
-      </Box>
+    <group ref={groupRef} position={position} scale={scale} name="adversary">
+      {/* Body */}
+      <Cylinder 
+        args={[0.25, 0.35, 1.2, 8]} 
+        position={[0, 0.6, 0]}
+        castShadow
+      >
+        <meshStandardMaterial color="#6a0dad" /> {/* Purple dress */}
+      </Cylinder>
       
       {/* Head */}
-      <Sphere args={[0.3, 16, 16]} position={[0, 2.1, 0]}>
-        <meshStandardMaterial color="#f5f5f4" />
+      <Sphere 
+        args={[0.25, 16, 16]} 
+        position={[0, 1.35, 0]}
+        castShadow
+      >
+        <meshStandardMaterial color="#f9c9a3" /> {/* Skin tone */}
       </Sphere>
       
-      {/* Blonde Hair */}
-      <group position={[0, 2.1, 0]}>
-        <Sphere args={[0.32, 16, 16]} position={[0, 0.05, 0]}>
-          <meshStandardMaterial color="#f0c674" />
-        </Sphere>
-        {/* Hair details */}
-        <Box args={[0.64, 0.2, 0.64]} position={[0, 0.1, 0]}>
-          <meshStandardMaterial color="#f0c674" />
-        </Box>
-      </group>
+      {/* Hair - top of head */}
+      <Sphere 
+        args={[0.27, 16, 16]} 
+        position={[0, 1.4, 0]}
+        scale={[1, 0.7, 1]}
+        name="hair-top"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Sphere>
+      
+      {/* Flowing hair down the back */}
+      <Box 
+        args={[0.3, 0.5, 0.15]} 
+        position={[0, 1.2, 0.05]}
+        name="hair-flowing-1"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Box>
+      
+      <Box 
+        args={[0.25, 0.4, 0.12]} 
+        position={[0, 0.9, 0.1]}
+        name="hair-flowing-2"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Box>
+      
+      {/* Add more hair to cover the sides of the head */}
+      <Sphere
+        args={[0.26, 16, 16]}
+        position={[0.15, 1.35, 0.1]}
+        scale={[0.5, 0.7, 0.7]}
+        name="hair-side-right"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Sphere>
+      
+      <Sphere
+        args={[0.26, 16, 16]}
+        position={[-0.15, 1.35, 0.1]}
+        scale={[0.5, 0.7, 0.7]}
+        name="hair-side-left"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Sphere>
+      
+      {/* Add longer flowing hair down the back */}
+      <Box 
+        args={[0.2, 0.3, 0.1]} 
+        position={[0, 0.7, 0.15]}
+        name="hair-flowing-3"
+        castShadow
+      >
+        <meshStandardMaterial color="#e6c35c" /> {/* Blonde hair color */}
+      </Box>
+      
+      {/* Face mask */}
+      <Box 
+        args={[0.3, 0.15, 0.15]} 
+        position={[0, 1.25, 0.25]}
+        castShadow
+      >
+        <meshStandardMaterial color="#4da6ff" /> {/* Light blue mask */}
+      </Box>
+      
+      {/* Mask straps */}
+      <Box 
+        args={[0.35, 0.03, 0.03]} 
+        position={[0, 1.3, 0.05]}
+        castShadow
+      >
+        <meshStandardMaterial color="#4da6ff" /> {/* Light blue strap */}
+      </Box>
+      
+      <Box 
+        args={[0.35, 0.03, 0.03]} 
+        position={[0, 1.2, 0.05]}
+        castShadow
+      >
+        <meshStandardMaterial color="#4da6ff" /> {/* Light blue strap */}
+      </Box>
       
       {/* Arms */}
-      <Box args={[0.2, 0.6, 0.2]} position={[0.5, 1.3, 0]} rotation={[0, 0, -Math.PI / 6]}>
-        <meshStandardMaterial color="#6b7280" />
-      </Box>
-      
-      <Box args={[0.2, 0.6, 0.2]} position={[-0.5, 1.3, 0]} rotation={[0, 0, Math.PI / 6]}>
-        <meshStandardMaterial color="#6b7280" />
-      </Box>
+      <Cylinder 
+        args={[0.06, 0.06, 0.7, 8]} 
+        position={[0.35, 0.7, 0]} 
+        rotation={[0, 0, -Math.PI / 3]}
+        castShadow
+      >
+        <meshStandardMaterial color="#f9c9a3" /> {/* Skin tone */}
+      </Cylinder>
+      <Cylinder 
+        args={[0.06, 0.06, 0.7, 8]} 
+        position={[-0.35, 0.7, 0]} 
+        rotation={[0, 0, Math.PI / 3]}
+        castShadow
+      >
+        <meshStandardMaterial color="#f9c9a3" /> {/* Skin tone */}
+      </Cylinder>
       
       {/* Legs */}
-      <Box args={[0.2, 0.6, 0.2]} position={[0.15, 0.2, 0]}>
-        <meshStandardMaterial color="#f5f5f4" />
-      </Box>
+      <Cylinder 
+        args={[0.08, 0.08, 0.6, 8]} 
+        position={[0.15, 0.05, 0]} 
+        castShadow
+      >
+        <meshStandardMaterial color="#f9c9a3" /> {/* Skin tone */}
+      </Cylinder>
+      <Cylinder 
+        args={[0.08, 0.08, 0.6, 8]} 
+        position={[-0.15, 0.05, 0]} 
+        castShadow
+      >
+        <meshStandardMaterial color="#f9c9a3" /> {/* Skin tone */}
+      </Cylinder>
       
-      <Box args={[0.2, 0.6, 0.2]} position={[-0.15, 0.2, 0]}>
-        <meshStandardMaterial color="#f5f5f4" />
+      {/* Shoes */}
+      <Box 
+        args={[0.1, 0.05, 0.15]} 
+        position={[0.15, -0.25, 0.05]} 
+        castShadow
+      >
+        <meshStandardMaterial color="#000000" /> {/* Black shoes */}
+      </Box>
+      <Box 
+        args={[0.1, 0.05, 0.15]} 
+        position={[-0.15, -0.25, 0.05]} 
+        castShadow
+      >
+        <meshStandardMaterial color="#000000" /> {/* Black shoes */}
       </Box>
       
       {/* Spray can */}
-      <group ref={sprayRef} position={[0.6, 1.5, 0.3]} rotation={[0, 0, Math.PI / 4]}>
-        <Cylinder args={[0.1, 0.1, 0.4, 16]} rotation={[Math.PI / 2, 0, 0]}>
+      <group 
+        ref={sprayRef} 
+        position={[0.6, 1.5, 0.3]} 
+        rotation={[0, 0, 0]}
+      >
+        <Cylinder 
+          args={[0.1, 0.1, 0.4, 16]} 
+          rotation={[0, 0, 0]}
+        >
           <meshStandardMaterial color="#ef4444" />
         </Cylinder>
         
-        <Cylinder args={[0.05, 0.1, 0.1, 16]} position={[0, 0, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
+        <Cylinder 
+          args={[0.05, 0.1, 0.1, 16]} 
+          position={[0, 0.25, 0]}
+          rotation={[0, 0, 0]}
+        >
           <meshStandardMaterial color="#1f2937" />
         </Cylinder>
         
@@ -289,4 +453,4 @@ export const Adversary: React.FC<AdversaryProps> = ({
       </group>
     </group>
   );
-}; 
+} 

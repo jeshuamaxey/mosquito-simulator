@@ -1,17 +1,21 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { Box, Plane } from '@react-three/drei';
+import { Box, Plane, Cylinder } from '@react-three/drei';
 import { Group } from 'three';
 import Human from './Human';
 import { cubicleWalls } from './CubicleWalls';
 import { Desk, Plant, deskConfigurations, plantPositions } from './Furniture';
-import { Adversary } from './Adversary';
+import Adversary from './Adversary';
 import { useGameStore } from '../store/gameStore';
 
-export default function Environment() {
+interface EnvironmentProps {
+  humanCount?: number;
+}
+
+export default function Environment({ humanCount = 15 }: EnvironmentProps) {
   const groupRef = useRef<Group>(null);
-  const { humanCount, increaseHumanCount } = useGameStore();
+  const { increaseHumanCount } = useGameStore();
   
   // Set up timer to increase human count periodically
   useEffect(() => {
@@ -168,9 +172,9 @@ export default function Environment() {
         <Box 
           key={`cubicle-wall-${index}`}
           name={`cubicle-wall-${index}`}
-          args={wall.size} 
-          position={wall.pos}
-          rotation={wall.rot}
+          args={wall.size as [number, number, number]} 
+          position={wall.pos as [number, number, number]}
+          rotation={wall.rot as [number, number, number]}
           castShadow
           receiveShadow
         >
@@ -180,53 +184,70 @@ export default function Environment() {
       
       {/* Reception Desk - near the front of the room */}
       <group position={[0, 0, 40]}>
-        {/* Main curved desk */}
-        <group position={[0, 1.1, 0]}>
-          {/* Create a curved desk using multiple segments */}
-          {Array.from({ length: 7 }).map((_, i) => {
-            const angle = (i - 3) * 0.2;
-            const xPos = Math.sin(angle) * 6;
-            const zPos = -Math.cos(angle) * 6;
-            const rotation = angle + Math.PI / 2;
-            
-            return (
-              <Box 
-                key={`desk-${i}`}
-                args={[2, 1.1, 0.8]} 
-                position={[xPos, 0, zPos]}
-                rotation={[0, rotation, 0]}
-                castShadow
-                receiveShadow
-              >
-                <meshStandardMaterial color="#5c3c2e" />
-              </Box>
-            );
-          })}
-          
-          {/* Desk top */}
-          {Array.from({ length: 7 }).map((_, i) => {
-            const angle = (i - 3) * 0.2;
-            const xPos = Math.sin(angle) * 6;
-            const zPos = -Math.cos(angle) * 6;
-            const rotation = angle + Math.PI / 2;
-            
-            return (
-              <Box 
-                key={`desktop-${i}`}
-                args={[2.2, 0.1, 1]} 
-                position={[xPos, 0.6, zPos]}
-                rotation={[0, rotation, 0]}
-                castShadow
-                receiveShadow
-              >
-                <meshStandardMaterial color="#8b5a2b" />
-              </Box>
-            );
-          })}
-        </group>
+        {/* Main desk - straight sections with proper corners */}
+        {/* Center section */}
+        <Box 
+          args={[4, 1.1, 0.8]} 
+          position={[0, 0.55, 0]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#5c3c2e" />
+        </Box>
+        
+        {/* Left section */}
+        <Box 
+          args={[0.8, 1.1, 3]} 
+          position={[-2.4, 0.55, -1.5]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#5c3c2e" />
+        </Box>
+        
+        {/* Right section */}
+        <Box 
+          args={[0.8, 1.1, 3]} 
+          position={[2.4, 0.55, -1.5]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#5c3c2e" />
+        </Box>
+        
+        {/* Desk top - with slight overhang */}
+        {/* Center section */}
+        <Box 
+          args={[4.2, 0.1, 1]} 
+          position={[0, 1.15, 0]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#8b5a2b" />
+        </Box>
+        
+        {/* Left section */}
+        <Box 
+          args={[1, 0.1, 3.2]} 
+          position={[-2.4, 1.15, -1.5]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#8b5a2b" />
+        </Box>
+        
+        {/* Right section */}
+        <Box 
+          args={[1, 0.1, 3.2]} 
+          position={[2.4, 1.15, -1.5]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial color="#8b5a2b" />
+        </Box>
         
         {/* Computer on reception desk */}
-        <group position={[-3, 1.8, -5.5]} rotation={[0, 0.4, 0]}>
+        <group position={[-1.5, 1.25, -0.2]} rotation={[0, 0.3, 0]}>
           {/* Monitor */}
           <Box 
             args={[1.2, 0.8, 0.1]} 
@@ -262,6 +283,45 @@ export default function Environment() {
           >
             <meshStandardMaterial color="#222222" />
           </Box>
+        </group>
+        
+        {/* Office chair behind reception desk */}
+        <group position={[0, 0, -2.5]}>
+          {/* Chair seat */}
+          <Box 
+            args={[0.6, 0.1, 0.6]} 
+            position={[0, 0.5, 0]}
+            castShadow
+          >
+            <meshStandardMaterial color="#333333" />
+          </Box>
+          
+          {/* Chair back */}
+          <Box 
+            args={[0.6, 0.8, 0.1]} 
+            position={[0, 0.9, 0.25]}
+            castShadow
+          >
+            <meshStandardMaterial color="#333333" />
+          </Box>
+          
+          {/* Chair base */}
+          <Cylinder 
+            args={[0.3, 0.3, 0.05, 16]} 
+            position={[0, 0.2, 0]}
+            castShadow
+          >
+            <meshStandardMaterial color="#555555" />
+          </Cylinder>
+          
+          {/* Chair leg */}
+          <Cylinder 
+            args={[0.05, 0.05, 0.3, 8]} 
+            position={[0, 0.35, 0]}
+            castShadow
+          >
+            <meshStandardMaterial color="#555555" />
+          </Cylinder>
         </group>
       </group>
       
@@ -300,12 +360,19 @@ export default function Environment() {
       
       {/* Office Desks with Computers */}
       {deskConfigurations.map((desk, index) => (
-        <Desk key={`desk-${index}`} position={desk.position} rotation={desk.rotation} />
+        <Desk 
+          key={`desk-${index}`} 
+          position={desk.position as [number, number, number]} 
+          rotation={desk.rotation as [number, number, number]} 
+        />
       ))}
       
       {/* Office Plants */}
       {plantPositions.map((position, index) => (
-        <Plant key={`plant-${index}`} position={position} />
+        <Plant 
+          key={`plant-${index}`} 
+          position={position as [number, number, number]} 
+        />
       ))}
       
       {/* Conference Room Table */}

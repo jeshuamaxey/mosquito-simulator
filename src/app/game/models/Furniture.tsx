@@ -8,51 +8,61 @@ export interface DeskConfig {
   rotation: [number, number, number];
 }
 
-// Create desk configurations that don't intersect with walls
-export const deskConfigurations: DeskConfig[] = [
-  // Quadrant 1 (top right) - desks in cubicles
-  { position: [15, 0, 20], rotation: [0, Math.PI, 0] },
-  { position: [25, 0, 20], rotation: [0, Math.PI, 0] },
-  { position: [15, 0, 5], rotation: [0, 0, 0] },
-  { position: [25, 0, 5], rotation: [0, 0, 0] },
-  { position: [35, 0, 15], rotation: [0, -Math.PI/2, 0] },
-  { position: [5, 0, 15], rotation: [0, Math.PI/2, 0] },
+// Completely revised desk configurations to avoid all wall intersections
+export const deskConfigurations = [
+  // Row 1 - along the left wall (moved further inward)
+  { position: [-35, 0, -30], rotation: [0, Math.PI / 2, 0] },
+  { position: [-35, 0, -20], rotation: [0, Math.PI / 2, 0] },
+  { position: [-35, 0, -10], rotation: [0, Math.PI / 2, 0] },
+  { position: [-35, 0, 0], rotation: [0, Math.PI / 2, 0] },
+  { position: [-35, 0, 10], rotation: [0, Math.PI / 2, 0] },
   
-  // Quadrant 2 (top left) - desks in cubicles
-  { position: [-15, 0, 20], rotation: [0, Math.PI, 0] },
-  { position: [-25, 0, 20], rotation: [0, Math.PI, 0] },
-  { position: [-15, 0, 5], rotation: [0, 0, 0] },
-  { position: [-25, 0, 5], rotation: [0, 0, 0] },
-  { position: [-35, 0, 15], rotation: [0, Math.PI/2, 0] },
-  { position: [-5, 0, 15], rotation: [0, -Math.PI/2, 0] },
+  // Row 2 - along the right wall (moved further inward)
+  { position: [35, 0, -30], rotation: [0, -Math.PI / 2, 0] },
+  { position: [35, 0, -20], rotation: [0, -Math.PI / 2, 0] },
+  { position: [35, 0, -10], rotation: [0, -Math.PI / 2, 0] },
+  { position: [35, 0, 0], rotation: [0, -Math.PI / 2, 0] },
+  { position: [35, 0, 10], rotation: [0, -Math.PI / 2, 0] },
   
-  // Quadrant 3 (bottom left) - desks in cubicles
-  { position: [-15, 0, -20], rotation: [0, 0, 0] },
-  { position: [-25, 0, -20], rotation: [0, 0, 0] },
-  { position: [-15, 0, -5], rotation: [0, Math.PI, 0] },
-  { position: [-25, 0, -5], rotation: [0, Math.PI, 0] },
-  { position: [-35, 0, -15], rotation: [0, Math.PI/2, 0] },
-  { position: [-5, 0, -15], rotation: [0, -Math.PI/2, 0] },
+  // Central area - repositioned to avoid cubicle walls
+  // Cluster 1 (moved to clear area)
+  { position: [-20, 0, -35], rotation: [0, 0, 0] },
+  { position: [-20, 0, -30], rotation: [0, 0, 0] },
+  { position: [-15, 0, -35], rotation: [0, 0, 0] },
+  { position: [-15, 0, -30], rotation: [0, 0, 0] },
   
-  // Quadrant 4 (bottom right) - desks in cubicles
-  { position: [15, 0, -20], rotation: [0, 0, 0] },
-  { position: [25, 0, -20], rotation: [0, 0, 0] },
-  { position: [15, 0, -5], rotation: [0, Math.PI, 0] },
-  { position: [25, 0, -5], rotation: [0, Math.PI, 0] },
-  { position: [35, 0, -15], rotation: [0, -Math.PI/2, 0] },
-  { position: [5, 0, -15], rotation: [0, Math.PI/2, 0] },
+  // Cluster 2 (moved to clear area)
+  { position: [20, 0, -35], rotation: [0, 0, 0] },
+  { position: [20, 0, -30], rotation: [0, 0, 0] },
+  { position: [15, 0, -35], rotation: [0, 0, 0] },
+  { position: [15, 0, -30], rotation: [0, 0, 0] },
+  
+  // Cluster 3 - middle area (repositioned)
+  { position: [-8, 0, -5], rotation: [0, Math.PI, 0] },
+  { position: [8, 0, -5], rotation: [0, 0, 0] },
+  { position: [-8, 0, 5], rotation: [0, Math.PI, 0] },
+  { position: [8, 0, 5], rotation: [0, 0, 0] },
+  
+  // Executive desks - back area (repositioned)
+  { position: [-25, 0, 20], rotation: [0, Math.PI / 4, 0] },
+  { position: [25, 0, 20], rotation: [0, -Math.PI / 4, 0] },
+  
+  // Reception area (moved further away from reception desk)
+  { position: [0, 0, 25], rotation: [0, Math.PI, 0] },
 ];
 
-// Plant positions that don't intersect with walls
-export const plantPositions: [number, number, number][] = [
-  [20, 0, -35], // Away from walls
-  [-35, 0, 20], // Away from walls
-  [35, 0, -15], // Away from walls
-  [-20, 0, 35], // Away from walls
-  [5, 0, 35],   // Near reception
-  [-5, 0, -35], // Near entrance
-  [40, 0, 5],   // Corner
-  [-40, 0, -5]  // Corner
+// Updated plant positions to avoid all intersections
+export const plantPositions = [
+  [-40, 0, -40],  // Corner plant
+  [40, 0, -40],   // Corner plant
+  [40, 0, 40],    // Corner plant
+  [-40, 0, 40],   // Corner plant
+  [-20, 0, 0],    // Divider plant
+  [20, 0, 0],     // Divider plant
+  [0, 0, -40],    // Center back wall
+  [0, 0, 15],     // Near reception
+  [-30, 0, 15],   // Executive area
+  [30, 0, 15],    // Executive area
 ];
 
 // Render a desk with computer

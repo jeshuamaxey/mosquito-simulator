@@ -7,8 +7,84 @@ export interface WallConfig {
   size: [number, number, number];
 }
 
+// Update cubicle wall configurations to avoid desk intersections
+export const cubicleWalls = [
+  // Outer walls - moved inward to avoid intersections with desks
+  { 
+    pos: [-30, 1.5, 0], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 60] 
+  },
+  { 
+    pos: [30, 1.5, 0], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 60] 
+  },
+  { 
+    pos: [0, 1.5, -30], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 60] 
+  },
+  
+  // Central dividers - repositioned to avoid desk clusters
+  { 
+    pos: [0, 1.5, 0], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 40] 
+  },
+  { 
+    pos: [0, 1.5, 0], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 40] 
+  },
+  
+  // Smaller dividers - adjusted to create clear pathways
+  { 
+    pos: [-15, 1.5, -15], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [15, 1.5, -15], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [-15, 1.5, 15], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [15, 1.5, 15], 
+    rot: [0, 0, 0], 
+    size: [0.2, 3, 10] 
+  },
+  
+  // Corner dividers - repositioned to create office spaces
+  { 
+    pos: [-15, 1.5, -15], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [15, 1.5, -15], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [-15, 1.5, 15], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 10] 
+  },
+  { 
+    pos: [15, 1.5, 15], 
+    rot: [0, Math.PI/2, 0], 
+    size: [0.2, 3, 10] 
+  },
+];
+
 // Create a maze-like office layout with cubicle walls
-export const cubicleWalls: WallConfig[] = [
+export const cubicleWallsOriginal: WallConfig[] = [
   // Main corridors - horizontal
   { pos: [0, 1.5, -30], rot: [0, 0, 0], size: [80, 3, 0.2] },
   { pos: [0, 1.5, -10], rot: [0, 0, 0], size: [80, 3, 0.2] },

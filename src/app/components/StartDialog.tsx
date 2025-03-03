@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface StartDialogProps {
@@ -11,16 +11,16 @@ export default function StartDialog({ onStart }: StartDialogProps) {
   const [visible, setVisible] = useState(true);
   const [clickable, setClickable] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (!clickable) return;
     
     setVisible(false);
     setTimeout(() => {
       onStart();
     }, 500); // Wait for fade animation to complete
-  };
+  }, [clickable, onStart]);
 
-  // Add event listener for clicks after a short delay
+  // Add visible to the dependency array
   useEffect(() => {
     // Set clickable to true after a short delay to prevent accidental clicks
     const clickableTimer = setTimeout(() => {
@@ -28,16 +28,14 @@ export default function StartDialog({ onStart }: StartDialogProps) {
     }, 500);
     
     if (visible) {
-      window.addEventListener('click', handleClick);
-      window.addEventListener('touchstart', handleClick);
+      document.addEventListener('click', handleClick);
     }
 
     return () => {
       clearTimeout(clickableTimer);
-      window.removeEventListener('click', handleClick);
-      window.removeEventListener('touchstart', handleClick);
+      document.removeEventListener('click', handleClick);
     };
-  }, [visible]);
+  }, [handleClick, visible]);
 
   return (
     <AnimatePresence>

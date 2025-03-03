@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Box, Cylinder } from '@react-three/drei';
 import { Group, Vector3, Box3, Object3D } from 'three';
@@ -85,47 +85,39 @@ export default function Human({
     }
   };
   
-  // Check if a position is valid (not inside a wall)
-  const isValidPosition = (pos: Vector3): boolean => {
-    const humanSize = 0.3; // Approximate size of human
-    const humanBox = new Box3();
-    humanBox.min.set(
-      pos.x - humanSize,
-      pos.y,
-      pos.z - humanSize
-    );
-    humanBox.max.set(
-      pos.x + humanSize,
-      pos.y + 1.5, // Human height
-      pos.z + humanSize
-    );
-    
-    // Find all walls in the scene
-    const walls: Object3D[] = [];
-    scene.traverse((object) => {
-      if (object.name.includes('cubicle-wall') || 
-          (object.position.y > 1 && 
-           (Math.abs(object.position.x) > 45 || Math.abs(object.position.z) > 45))) {
-        walls.push(object);
-      }
-    });
-    
-    // Check for collisions with walls
-    for (const wall of walls) {
-      const wallBox = new Box3().setFromObject(wall);
-      if (humanBox.intersectsBox(wallBox)) {
+  // Move isValidPosition inside useCallback
+  const findValidPosition = useCallback(() => {
+    // Define isValidPosition inside the callback
+    const isValidPosition = (pos: Vector3): boolean => {
+      // Check if position is too close to walls
+      if (Math.abs(pos.x) > 45 || Math.abs(pos.z) > 45) {
         return false;
       }
-    }
-    
-    return true;
-  };
-  
-  // Find a valid position near the initial position
-  const findValidPosition = (pos: Vector3): Vector3 => {
+      
+      // Check if position intersects with any objects in the scene
+      const tempBox = new Box3().setFromCenterAndSize(
+        pos,
+        new Vector3(1, 2, 1)
+      );
+      
+      let intersects = false;
+      scene.traverse((object) => {
+        if (object.name.includes('cubicle-wall') || 
+            object.name.includes('desk') ||
+            object.name.includes('adversary')) {
+          const objectBox = new Box3().setFromObject(object);
+          if (tempBox.intersectsBox(objectBox)) {
+            intersects = true;
+          }
+        }
+      });
+      
+      return !intersects;
+    };
+
     // If the initial position is valid, use it
-    if (isValidPosition(pos)) {
-      return pos;
+    if (isValidPosition(currentPosition.current)) {
+      return currentPosition.current;
     }
     
     // Try positions in increasing distance from the original
@@ -137,9 +129,9 @@ export default function Human({
     for (let distance = 0.5; distance <= 5; distance += 0.5) {
       for (const [dx, dz] of directions) {
         const testPos = new Vector3(
-          pos.x + dx * distance,
-          pos.y,
-          pos.z + dz * distance
+          currentPosition.current.x + dx * distance,
+          currentPosition.current.y,
+          currentPosition.current.z + dz * distance
         );
         
         if (isValidPosition(testPos)) {
@@ -151,10 +143,10 @@ export default function Human({
     // If no valid position found, return a position in the center area
     return new Vector3(
       Math.random() * 10 - 5,
-      pos.y,
+      currentPosition.current.y,
       Math.random() * 10 - 5
     );
-  };
+  }, [scene]);
   
   // Initialize position on mount
   useEffect(() => {
@@ -162,7 +154,7 @@ export default function Human({
     
     // Wait a frame for the scene to be fully loaded
     const timer = setTimeout(() => {
-      const validPosition = findValidPosition(currentPosition.current);
+      const validPosition = findValidPosition();
       currentPosition.current.copy(validPosition);
       
       if (groupRef.current) {
@@ -171,7 +163,7 @@ export default function Human({
     }, 100);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [findValidPosition]);
   
   // Set userData for identification
   useEffect(() => {
