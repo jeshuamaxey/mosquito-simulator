@@ -1,19 +1,27 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { Box, Plane } from '@react-three/drei';
 import { Group } from 'three';
 import Human from './Human';
 import { cubicleWalls } from './CubicleWalls';
 import { Desk, Plant, deskConfigurations, plantPositions } from './Furniture';
 import { Adversary } from './Adversary';
+import { useGameStore } from '../store/gameStore';
 
-interface EnvironmentProps {
-  humanCount?: number;
-}
-
-export default function Environment({ humanCount = 10 }: EnvironmentProps) {
+export default function Environment() {
   const groupRef = useRef<Group>(null);
+  const { humanCount, increaseHumanCount } = useGameStore();
+  
+  // Set up timer to increase human count periodically
+  useEffect(() => {
+    // Increase human count every 30 seconds
+    const timer = setInterval(() => {
+      increaseHumanCount();
+    }, 30000);
+    
+    return () => clearInterval(timer);
+  }, [increaseHumanCount]);
   
   // Generate random positions for humans
   const humanPositions = Array.from({ length: humanCount }, () => {
@@ -345,10 +353,11 @@ export default function Environment({ humanCount = 10 }: EnvironmentProps) {
       {/* Humans */}
       {humanPositions.map((position, index) => (
         <Human 
-          key={index} 
+          key={`human-${index}`} 
           position={position} 
           scale={1}
           walkSpeed={0.3 + Math.random() * 0.4}
+          outfitIndex={index}
         />
       ))}
       

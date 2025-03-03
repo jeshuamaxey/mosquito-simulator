@@ -11,6 +11,8 @@ In Mosquito Simulator, you play as a mosquito flying through a low-poly 3D envir
 - Realistic mosquito-like movement with random flight patterns
 - Humans to infect
 - HUD showing lives and infection count
+- Office secretary adversary who chases you with bug spray
+- Increasing number of humans over time with different colored outfits
 
 ## Getting Started
 
@@ -43,6 +45,39 @@ yarn dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser to play the game.
 
+## Deployment
+
+### Deploying to Vercel
+
+The easiest way to deploy the Mosquito Simulator is to use the [Vercel Platform](https://vercel.com).
+
+1. Install the Vercel CLI:
+```bash
+npm install -g vercel
+```
+
+2. Login to your Vercel account:
+```bash
+vercel login
+```
+
+3. Deploy the project:
+```bash
+vercel
+```
+
+4. For production deployment:
+```bash
+vercel --prod
+```
+
+Alternatively, you can connect your GitHub repository to Vercel and enable automatic deployments on push.
+
+1. Push your code to GitHub
+2. Import your project into Vercel: https://vercel.com/import/git
+3. Select the repository and configure as needed
+4. Deploy
+
 ## How to Play
 
 - **WASD**: Move forward, left, backward, right
@@ -50,8 +85,9 @@ yarn dev
 - **Shift**: Fly down
 - **Mouse**: Look around
 - **Click**: Infect humans (when close enough)
+- **R**: Restart game (when game over)
 
-The game starts with 3 lives. Your objective is to infect as many humans as possible.
+The game starts with 3 lives. Your objective is to infect as many humans as possible while avoiding the office secretary who will spray you with bug spray. Each time you get hit by the spray, you lose a life. The game ends when you run out of lives.
 
 ## Technologies Used
 
