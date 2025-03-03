@@ -13,10 +13,7 @@ export default function KeyboardControls({ children }: KeyboardControlsProps) {
   const controls = [
     { name: 'forward', keys: [controlKeys.forward] },
     { name: 'backward', keys: [controlKeys.backward] },
-    { name: 'left', keys: [controlKeys.left] },
-    { name: 'right', keys: [controlKeys.right] },
-    { name: 'up', keys: [controlKeys.up] },
-    { name: 'down', keys: [controlKeys.down] },
+    // Removed left/right controls as mouse will handle turning
   ];
 
   return (

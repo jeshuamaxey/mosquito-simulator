@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Box, Cylinder } from '@react-three/drei';
 import { Group, Vector3 } from 'three';
@@ -41,6 +41,21 @@ export default function Human({
       increaseInfectionCount();
     }
   };
+  
+  // Set userData for identification
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.userData.isHuman = true;
+      groupRef.current.userData.infected = infected;
+    }
+  }, [infected]);
+  
+  // Update userData when infected state changes
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.userData.infected = infected;
+    }
+  }, [infected]);
   
   // Simple walking animation
   useFrame((_, delta) => {

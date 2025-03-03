@@ -40,7 +40,7 @@ export default function Mosquito({
   });
   
   return (
-    <group ref={groupRef} position={position} scale={scale} rotation={[0, Math.PI, 0]}>
+    <group ref={groupRef} position={position} scale={scale}>
       {/* Body */}
       <group>
         {/* Head */}

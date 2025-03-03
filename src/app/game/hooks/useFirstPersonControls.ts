@@ -1,16 +1,13 @@
 import { useRef, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
-import { Vector3, Euler } from 'three';
+import { useFrame } from '@react-three/fiber';
+import { Vector3 } from 'three';
 import { useKeyboardControls } from '@react-three/drei';
 
-// Define control scheme
+// Define control scheme - only forward/backward
 export const controlKeys = {
   forward: 'KeyW',
   backward: 'KeyS',
-  left: 'KeyA',
-  right: 'KeyD',
-  up: 'Space',
-  down: 'ShiftLeft',
+  // Removed left/right as mouse will handle turning
 };
 
 export const useFirstPersonControls = (
@@ -18,7 +15,6 @@ export const useFirstPersonControls = (
   maxSpeed = 0.5,
   drag = 0.05
 ) => {
-  const { camera } = useThree();
   const velocity = useRef(new Vector3(0, 0, 0));
   const [, getKeys] = useKeyboardControls();
   
@@ -27,61 +23,30 @@ export const useFirstPersonControls = (
     const keys = getKeys ? getKeys() : {};
     const forward = keys?.forward || false;
     const backward = keys?.backward || false;
-    const left = keys?.left || false;
-    const right = keys?.right || false;
-    const up = keys?.up || false;
-    const down = keys?.down || false;
     
-    // Apply forces based on keys
-    const direction = new Vector3();
+    // Apply forces based on keys - only forward/backward
+    let acceleration = 0;
     
-    // Forward/backward in camera direction
     if (forward) {
-      direction.z -= 1;
-    }
-    if (backward) {
-      direction.z += 1;
-    }
-    
-    // Left/right relative to camera
-    if (left) {
-      direction.x -= 1;
-    }
-    if (right) {
-      direction.x += 1;
+      // W key should be positive for forward movement
+      acceleration = speed;
+    } else if (backward) {
+      // S key should be negative for backward movement
+      acceleration = -speed;
     }
     
-    // Up/down in world space
-    if (up) {
-      direction.y += 1;
+    // Set velocity directly from input - only z component for forward/backward
+    velocity.current.z = acceleration;
+    
+    // Apply drag when no input
+    if (acceleration === 0) {
+      velocity.current.z *= (1 - drag);
     }
-    if (down) {
-      direction.y -= 1;
-    }
-    
-    // Normalize direction vector
-    if (direction.length() > 0) {
-      direction.normalize();
-    }
-    
-    // Convert direction to camera space
-    const cameraDirection = direction.clone();
-    cameraDirection.applyEuler(new Euler(0, camera.rotation.y, 0));
-    
-    // Apply acceleration
-    velocity.current.x += cameraDirection.x * speed;
-    velocity.current.y += direction.y * speed; // Keep y in world space
-    velocity.current.z += cameraDirection.z * speed;
-    
-    // Apply drag
-    velocity.current.x *= (1 - drag);
-    velocity.current.y *= (1 - drag);
-    velocity.current.z *= (1 - drag);
     
     // Limit max speed
-    const currentSpeed = velocity.current.length();
+    const currentSpeed = Math.abs(velocity.current.z);
     if (currentSpeed > maxSpeed) {
-      velocity.current.multiplyScalar(maxSpeed / currentSpeed);
+      velocity.current.z = Math.sign(velocity.current.z) * maxSpeed;
     }
   });
   
