@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mosquito Simulator
+
+A first-person mosquito simulation game built with Next.js, React, and Three.js.
+
+## Description
+
+In Mosquito Simulator, you play as a mosquito flying through a low-poly 3D environment. Your objective is to infect as many humans as possible while avoiding dangers. The game features:
+
+- First-person mosquito flight mechanics
+- Low-poly "Web 3G" aesthetic
+- Realistic mosquito-like movement with random flight patterns
+- Humans to infect
+- HUD showing lives and infection count
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18.0.0 or higher
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/mosquito-simulator.git
+cd mosquito-simulator
+```
+
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Run the development server
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to play the game.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How to Play
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **WASD**: Move forward, left, backward, right
+- **Space**: Fly up
+- **Shift**: Fly down
+- **Mouse**: Look around
+- **Click**: Infect humans (when close enough)
 
-## Learn More
+The game starts with 3 lives. Your objective is to infect as many humans as possible.
 
-To learn more about Next.js, take a look at the following resources:
+## Technologies Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Next.js](https://nextjs.org/) - React framework
+- [React](https://reactjs.org/) - UI library
+- [Three.js](https://threejs.org/) - 3D library
+- [React Three Fiber](https://github.com/pmndrs/react-three-fiber) - React renderer for Three.js
+- [React Three Drei](https://github.com/pmndrs/drei) - Useful helpers for React Three Fiber
+- [Zustand](https://github.com/pmndrs/zustand) - State management
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Future Enhancements
 
-## Deploy on Vercel
+- Add sound effects
+- Add more environments
+- Add more obstacles and challenges
+- Add a scoring system
+- Add different types of humans with varying difficulty
+- Add power-ups
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Inspired by the life of a mosquito
+- Thanks to the React Three Fiber community for the amazing tools
